@@ -1,0 +1,48 @@
+---
+title: "Projet d'apprentissage non supervisé"
+author: "Marie Guibert - Clémence Chesnais"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+# Environnement de travail
+
+```{r}
+library(tidyverse)
+library(stargazer)
+
+```
+
+# Question 1
+
+## Importation des données
+
+```{r}
+pays <- read.csv("Pays_donnees.csv",sep=",",dec=".",stringsAsFactors = T)
+# nrow(pays) # On a bien 167 individus
+str(pays)
+summary(pays)
+```
+
+Dans ce jeu de données, nous pouvons observer 10 variables dont 9 numériques et 1 facteur comprenant les différents pays (individus). Nous avons choisi de transformer la variable pays en facteur pour simplifier nos traitement des données.
+
+Afin de pouvoir analyser ces données, nous allons réaliser des statistiques descriptives de base.
+
+## Statistiques descriptives
+
+```{r}
+sum(is.na(pays))
+```
+
+Le jeu de données ne présente pas de valeur manquante, nous n'avons pas besoin de faire de modification de ce point de vue.
+
+<u>Résumé des données</u> :
+
+```{r}
+stargazer(pays,type="text",title="Résumé des données",out="resume_donnnees.txt")
+```
+
+```{r}
+# par(mfrow=c(1,4))
+
+```
