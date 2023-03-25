@@ -121,14 +121,16 @@
 \end{Shaded}
 
 \begin{verbatim}
-## -- Attaching packages --------------------------------------- tidyverse 1.3.2 --
-## v ggplot2 3.4.0      v purrr   0.3.4 
-## v tibble  3.1.8      v dplyr   1.0.10
-## v tidyr   1.2.1      v stringr 1.4.1 
-## v readr   2.1.2      v forcats 0.5.2 
+## -- Attaching core tidyverse packages ------------------------ tidyverse 2.0.0 --
+## v dplyr     1.1.0     v readr     2.1.4
+## v forcats   1.0.0     v stringr   1.5.0
+## v ggplot2   3.4.1     v tibble    3.2.0
+## v lubridate 1.9.2     v tidyr     1.3.0
+## v purrr     1.0.1     
 ## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
 ## x dplyr::filter() masks stats::filter()
 ## x dplyr::lag()    masks stats::lag()
+## i Use the ]8;;http://conflicted.r-lib.org/conflicted package]8;; to force all conflicts to become errors
 \end{verbatim}
 
 \begin{Shaded}
@@ -160,6 +162,20 @@
 ##     combine
 \end{verbatim}
 
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(corrplot)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: le package 'corrplot' a été compilé avec la version R 4.2.3
+\end{verbatim}
+
+\begin{verbatim}
+## corrplot 0.92 loaded
+\end{verbatim}
+
 \hypertarget{question-1}{%
 \section{Question 1}\label{question-1}}
 
@@ -168,14 +184,13 @@
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{data }\OtherTok{\textless{}{-}} \FunctionTok{read.csv}\NormalTok{(}\StringTok{"Pays\_donnees.csv"}\NormalTok{,}\AttributeTok{sep=}\StringTok{","}\NormalTok{,}\AttributeTok{dec=}\StringTok{"."}\NormalTok{,}\AttributeTok{stringsAsFactors =}\NormalTok{ T)}
+\NormalTok{data }\OtherTok{\textless{}{-}} \FunctionTok{read.csv}\NormalTok{(}\StringTok{"Pays\_donnees.csv"}\NormalTok{,}\AttributeTok{sep=}\StringTok{","}\NormalTok{,}\AttributeTok{dec=}\StringTok{"."}\NormalTok{,}\AttributeTok{stringsAsFactors =}\NormalTok{ T,}\AttributeTok{row.names=}\StringTok{"pays"}\NormalTok{)}
 \FunctionTok{str}\NormalTok{(data)}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
-## 'data.frame':    167 obs. of  10 variables:
-##  $ pays       : Factor w/ 167 levels "Afghanistan",..: 1 2 3 4 5 6 7 8 9 10 ...
+## 'data.frame':    167 obs. of  9 variables:
 ##  $ enfant_mort: num  90.2 16.6 27.3 119 10.3 14.5 18.1 4.8 4.3 39.2 ...
 ##  $ exports    : num  10 28 38.4 62.3 45.5 18.9 20.8 19.8 51.3 54.3 ...
 ##  $ sante      : num  7.58 6.55 4.17 2.85 6.03 8.1 4.4 8.73 11 5.88 ...
@@ -340,5 +355,127 @@ Imports et Exports :
 \end{Shaded}
 
 \includegraphics{projet_apprentissage_non_supp_files/figure-latex/unnamed-chunk-10-1.pdf}
+\uline{Matrice de corrélation :}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{corrplot}\NormalTok{(}\FunctionTok{cor}\NormalTok{(data[}\SpecialCharTok{{-}}\DecValTok{1}\NormalTok{]),}\AttributeTok{method=}\StringTok{"circle"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{projet_apprentissage_non_supp_files/figure-latex/unnamed-chunk-11-1.pdf}
+Grâce à cette matrice de corrélation, nous pouvons observer une
+corrélation négative, entre l'espérance de vie et le nombre d'enfants
+par femme. Par ailleurs, une corrélation positive,proche de 1, apparaît
+entre le PIB par habitant et le revenu net moyen par personne.
+
+\hypertarget{question-2}{%
+\section{Question 2}\label{question-2}}
+
+\uline{Matrice de dissimilarité :}
+
+Afin de chercher les individus similaires, on peut calculer une matrice
+de distance / dissimilarité.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{MD }\OtherTok{\textless{}{-}} \FunctionTok{as.matrix}\NormalTok{(}\FunctionTok{dist}\NormalTok{(data,}\AttributeTok{method =} \StringTok{"euclidean"}\NormalTok{))}
+\CommentTok{\# MD \textless{}{-} as.matrix(dist(data,method = "minkowski"))}
+\CommentTok{\# MD \textless{}{-} as.matrix(dist(data,method = "manhattan"))}
+\FunctionTok{which}\NormalTok{(MD }\SpecialCharTok{==} \FunctionTok{min}\NormalTok{(MD[}\FunctionTok{row}\NormalTok{(MD)}\SpecialCharTok{!=}\FunctionTok{col}\NormalTok{(MD)]),}\AttributeTok{arr.ind=}\ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##               row col
+## Guinea-Bissau  65  26
+## Burkina Faso   26  65
+\end{verbatim}
+
+Avec la distance euclidienne, de manhattan et mikowski, les deux pays
+les plus proches / similaires sont le Burkina Faso et la Guinée-Bissau.
+Nous pouvons constater que ce sont deux pays d'Afrique, avec un niveau
+de développement plus faible.
+
+\uline{Classification Ascendante Hiérarchique :}
+
+Tout d'abord, nous aurions aimé représenter les variables dans le plan
+mais, ayant trop de variables à étudier, cela n'a pas trop d'intérêt.
+
+On calcule d'abord la distance euclidienne au carré.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{D }\OtherTok{\textless{}{-}} \FunctionTok{dist}\NormalTok{(data,}\AttributeTok{method=}\StringTok{"euclidean"}\NormalTok{)}\SpecialCharTok{\^{}}\DecValTok{2}
+\end{Highlighting}
+\end{Shaded}
+
+Méthode CAH avec le saut minimal (single linkage) :
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{CAH\_min }\OtherTok{\textless{}{-}} \FunctionTok{hclust}\NormalTok{(}\AttributeTok{d=}\NormalTok{ D,}\AttributeTok{method=}\StringTok{"single"}\NormalTok{)}
+\FunctionTok{plot}\NormalTok{(CAH\_min)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{projet_apprentissage_non_supp_files/figure-latex/unnamed-chunk-14-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{plot}\NormalTok{(}\FunctionTok{rev}\NormalTok{(CAH\_min}\SpecialCharTok{$}\NormalTok{height),}\AttributeTok{type=}\StringTok{"b"}\NormalTok{,}\AttributeTok{xlab=}\StringTok{"Nombre de partitions"}\NormalTok{,}\AttributeTok{ylab=}\StringTok{"I\_W"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{projet_apprentissage_non_supp_files/figure-latex/unnamed-chunk-14-2.pdf}
+
+Ce premier dendrogramme n'est pas très explicite et ne nous permet pas
+de faire un choix de partition clair. Cependant, le graphique suivant
+nous suggère une partition en 3 ou 4 groupes. En effet, chaque coupure
+correspond à un saut important d'inertie intra-classes.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{CAH\_max }\OtherTok{\textless{}{-}} \FunctionTok{hclust}\NormalTok{(}\AttributeTok{d=}\NormalTok{ D,}\AttributeTok{method=}\StringTok{"complete"}\NormalTok{)}
+\FunctionTok{plot}\NormalTok{(CAH\_max)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{projet_apprentissage_non_supp_files/figure-latex/unnamed-chunk-15-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{plot}\NormalTok{(}\FunctionTok{rev}\NormalTok{(CAH\_max}\SpecialCharTok{$}\NormalTok{height),}\AttributeTok{type=}\StringTok{"b"}\NormalTok{,}\AttributeTok{xlab=}\StringTok{"Nombre de partitions"}\NormalTok{,}\AttributeTok{ylab=}\StringTok{"I\_W"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{projet_apprentissage_non_supp_files/figure-latex/unnamed-chunk-15-2.pdf}
+
+En analysant le dendrogramme, nous pouvons distinguer 3 groupes de pays
+différents. De plus, le deuxième graphique nous permet de confirmer
+cette hypothèse.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{CAH\_ward }\OtherTok{\textless{}{-}} \FunctionTok{hclust}\NormalTok{( }\AttributeTok{d =}\NormalTok{ D,}\AttributeTok{method=}\StringTok{"ward.D"}\NormalTok{)}
+\FunctionTok{plot}\NormalTok{(CAH\_ward)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{projet_apprentissage_non_supp_files/figure-latex/unnamed-chunk-16-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{plot}\NormalTok{(}\FunctionTok{rev}\NormalTok{(CAH\_ward}\SpecialCharTok{$}\NormalTok{height),}\AttributeTok{type=}\StringTok{"b"}\NormalTok{,}\AttributeTok{xlab=}\StringTok{"Nombre de partitions"}\NormalTok{,}\AttributeTok{ylab=}\StringTok{"I\_W"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{projet_apprentissage_non_supp_files/figure-latex/unnamed-chunk-16-2.pdf}
+
+Cette dernière CAH nous permet de confirmer notre hypothèse de partition
+en 3 groupes.
+
+En conclusion, nous allons choisir une partition avec 3 groupes
+différents.
 
 \end{document}
