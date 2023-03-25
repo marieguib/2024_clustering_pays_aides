@@ -18,7 +18,7 @@ library(gridExtra)
 ## Importation des données
 
 ```{r}
-data <- read.csv("Pays_donnees.csv",sep=",",dec=".",stringsAsFactors = T)
+data <- read.csv("Pays_donnees.csv",sep=",",dec=".",stringsAsFactors = T,row.names="pays")
 str(data)
 # summary(data)
 ```
@@ -111,6 +111,66 @@ exports <- ggplot(data=data, aes(y=exports)) +
 
 grid.arrange(exports, imports, ncol=2)
 ```
+[Matrice de corrélation :]{.underline}
 
+```{r}
+corrplot(cor(data[-1]),method="circle")
+```
+Grâce à cette matrice de corrélation, nous pouvons observer une corrélation négative, entre l'espérance de vie et le nombre d'enfants par femme. Par ailleurs, une corrélation positive,proche de 1, apparaît entre le PIB par habitant et le revenu net moyen par personne.
+
+
+# Question 2
+
+[Matrice de dissimilarité :]{.underline}
+
+
+Afin de chercher les individus similaires, on peut calculer une matrice de distance / dissimilarité.
+
+```{r}
+MD <- as.matrix(dist(data,method = "euclidean"))
+# MD <- as.matrix(dist(data,method = "minkowski"))
+# MD <- as.matrix(dist(data,method = "manhattan"))
+which(MD == min(MD[row(MD)!=col(MD)]),arr.ind=TRUE)
+```
+Avec la distance euclidienne, de manhattan et mikowski, les deux pays les plus proches / similaires sont le Burkina Faso et la Guinée-Bissau. Nous pouvons constater que ce sont deux pays d'Afrique, avec un niveau de développement plus faible.
+
+[Classification Ascendante Hiérarchique :]{.underline}
+
+Tout d'abord, nous aurions aimé représenter les variables dans le plan mais, ayant trop de variables à étudier, cela n'a pas trop d'intérêt.
+
+On calcule d'abord la distance euclidienne au carré.
+```{r}
+D <- dist(data,method="euclidean")^2
+```
+
+Méthode CAH avec le saut minimal (single linkage) : 
+
+```{r}
+CAH_min <- hclust(d= D,method="single")
+plot(CAH_min)
+plot(rev(CAH_min$height),type="b",xlab="Nombre de partitions",ylab="I_W")
+
+```
+
+Ce premier dendrogramme n'est pas très explicite et ne nous permet pas de faire un choix de partition clair. Cependant, le graphique suivant nous suggère une partition en 3 ou 4 groupes. En effet, chaque coupure correspond à un saut important d'inertie intra-classes. 
+
+```{r}
+CAH_max <- hclust(d= D,method="complete")
+plot(CAH_max)
+plot(rev(CAH_max$height),type="b",xlab="Nombre de partitions",ylab="I_W")
+```
+
+En analysant le dendrogramme, nous pouvons distinguer 3 groupes de pays différents. De plus, le deuxième graphique nous permet de confirmer cette hypothèse.
+
+
+```{r}
+CAH_ward <- hclust( d = D,method="ward.D")
+plot(CAH_ward)
+plot(rev(CAH_ward$height),type="b",xlab="Nombre de partitions",ylab="I_W")
+```
+
+Cette dernière CAH nous permet de confirmer notre hypothèse de partition en 3 groupes.
+
+En conclusion, nous allons choisir une partition avec 3 groupes différents.
 
 
