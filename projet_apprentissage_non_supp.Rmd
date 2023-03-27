@@ -12,6 +12,7 @@ library(tidyverse)
 library(stargazer)
 library(gridExtra)
 library(corrplot)
+library(NbClust)
 ```
 
 # Question 1
@@ -139,7 +140,8 @@ Avec la distance euclidienne, de manhattan et mikowski, les deux pays les plus p
 
 Tout d'abord, nous aurions aimé représenter les variables dans le plan mais, ayant trop de variables à étudier, cela n'a pas trop d'intérêt.
 
-On calcule d'abord la distance euclidienne au carré.
+On calcule d'abord la distance euclidienne au carré : 
+
 ```{r}
 D <- dist(data,method="euclidean")^2
 ```
@@ -149,20 +151,30 @@ Méthode CAH avec le saut minimal (single linkage) :
 ```{r}
 CAH_min <- hclust(d= D,method="single")
 plot(CAH_min)
-plot(rev(CAH_min$height),type="b",xlab="Nombre de partitions",ylab="I_W")
+```
+Ce premier dendrogramme n'est pas très explicite et ne nous permet pas de faire un choix de partition clair. 
+Regardons alors la courbe de perte d'inertie (on se contente des 20 premières valeurs pour ne pas "noyer" l'information importante) :
 
+```{r}
+plot(rev(CAH_min$height)[1:20],type="b",xlab="Nombre de partitions",ylab="I_W")
 ```
 
-Ce premier dendrogramme n'est pas très explicite et ne nous permet pas de faire un choix de partition clair. Cependant, le graphique suivant nous suggère une partition en 3 ou 4 groupes. En effet, chaque coupure correspond à un saut important d'inertie intra-classes. 
+Cependant, le tracé de la pertie d'inertie nous suggère de choisir une partition en 3 ou 4 groupes. En effet, chaque coupure correspond à un saut important d'inertie intra-classes. 
+
+Faisons maintant les mêmes graphiques avec la méthode de distance de saut maximal (complet linkage):
 
 ```{r}
 CAH_max <- hclust(d= D,method="complete")
 plot(CAH_max)
+```
+
+En analysant ce dendrogramme, nous pouvons distinguer 3 groupes de pays différents. De plus, le graphique suivant nous permet de confirmer cette hypothèse 
+
+```{r}
 plot(rev(CAH_max$height),type="b",xlab="Nombre de partitions",ylab="I_W")
 ```
 
-En analysant le dendrogramme, nous pouvons distinguer 3 groupes de pays différents. De plus, le deuxième graphique nous permet de confirmer cette hypothèse.
-
+Enfin, avec la distance de ward, on obtient les résultats suivants: 
 
 ```{r}
 CAH_ward <- hclust( d = D,method="ward.D")
@@ -172,6 +184,32 @@ plot(rev(CAH_ward$height),type="b",xlab="Nombre de partitions",ylab="I_W")
 
 Cette dernière CAH nous permet de confirmer notre hypothèse de partition en 3 groupes.
 
+```{r}
+plot(rev(CAH_ward$height),type="b",xlab="Nombre de partitions",ylab="I_W")
+```
+
 En conclusion, nous allons choisir une partition avec 3 groupes différents.
 
 
+[Dendrogramme avec la fonction cutree :]{.underline}
+
+La fonction cutree permet de faire apparaitre visuellement les groupes.
+
+```{r}
+K=3
+gpe.ward = cutree(CAH_ward,k=K)
+plot(gpe.ward)
+```
+
+Sur ce graphique, on remarque correctement 3 groupes distinct.
+ 
+ 
+[Représentation des groupes avec la fonction clusplot :]{.underline}
+
+```{r}
+clusplot(data,cutree(CAH_ward,K),labels=4,col.p=as.numeric(rownames(data)))
+```
+ 
+Ce graphe correspond à la représentation des groupes sur les deux premiers axes principaux d'une ACP. De plus, des ellipses de contour autour des groupes sont tracées. On observe ici en colorant les points avec leur vraie classes que ??
+
+A FINIR PB PAS DE POINTS (pas eu le temps de finir)
