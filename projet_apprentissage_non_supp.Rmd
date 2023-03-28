@@ -12,6 +12,7 @@ library(tidyverse)
 library(stargazer)
 library(gridExtra)
 library(corrplot)
+library(cluster)
 library(NbClust)
 ```
 
@@ -26,6 +27,9 @@ str(data)
 ```
 
 Dans ce jeu de données, nous pouvons observer 10 variables dont 9 numériques et 1 facteur comprenant les différents pays (individus). Nous avons choisi de transformer la variable pays en facteur pour simplifier nos traitement des données.
+
+
+# STANDARDISATION ?
 
 Afin de pouvoir analyser ces données, nous allons réaliser des statistiques descriptives de base.
 
@@ -134,11 +138,17 @@ MD <- as.matrix(dist(data,method = "euclidean"))
 # MD <- as.matrix(dist(data,method = "manhattan"))
 which(MD == min(MD[row(MD)!=col(MD)]),arr.ind=TRUE)
 ```
-Avec la distance euclidienne, de manhattan et mikowski, les deux pays les plus proches / similaires sont le Burkina Faso et la Guinée-Bissau. Nous pouvons constater que ce sont deux pays d'Afrique, avec un niveau de développement plus faible.
+Avec la distance euclidienne, de manhattan et mikowski, les deux pays les plus proches / similaires sont le Burkina Faso et la Guinée-Bissau. 
+
 
 [Classification Ascendante Hiérarchique :]{.underline}
 
-Tout d'abord, nous aurions aimé représenter les variables dans le plan mais, ayant trop de variables à étudier, cela n'a pas trop d'intérêt.
+Cette première représentation nous permet d'observer de potentiels groupes de pays. Ayant beaucoup de variables, cette analyse est un peu plus compliquée et aucune partition ne semble se démarquer.
+
+```{r}
+pairs(data)
+```
+
 
 On calcule d'abord la distance euclidienne au carré : 
 
@@ -153,13 +163,13 @@ CAH_min <- hclust(d= D,method="single")
 plot(CAH_min)
 ```
 Ce premier dendrogramme n'est pas très explicite et ne nous permet pas de faire un choix de partition clair. 
-Regardons alors la courbe de perte d'inertie (on se contente des 20 premières valeurs pour ne pas "noyer" l'information importante) :
 
 ```{r}
 plot(rev(CAH_min$height)[1:20],type="b",xlab="Nombre de partitions",ylab="I_W")
 ```
 
-Cependant, le tracé de la pertie d'inertie nous suggère de choisir une partition en 3 ou 4 groupes. En effet, chaque coupure correspond à un saut important d'inertie intra-classes. 
+Cependant, le tracé de la pertie d'inertie nous suggère de choisir une partition en 3 ou 4 groupes. Nous avons choisi de représenter seulement les 20 premières valeurs pour ne pas "noyer" l'information importante. Chaque coupure correspond à un saut important d'inertie intra-classes. 
+
 
 Faisons maintant les mêmes graphiques avec la méthode de distance de saut maximal (complet linkage):
 
@@ -168,48 +178,74 @@ CAH_max <- hclust(d= D,method="complete")
 plot(CAH_max)
 ```
 
-En analysant ce dendrogramme, nous pouvons distinguer 3 groupes de pays différents. De plus, le graphique suivant nous permet de confirmer cette hypothèse 
+En analysant ce dendrogramme, nous pouvons distinguer 3 groupes de pays différents. De plus, le graphique suivant nous permet de confirmer cette hypothèse. 
 
 ```{r}
-plot(rev(CAH_max$height),type="b",xlab="Nombre de partitions",ylab="I_W")
+plot(rev(CAH_max$height)[1:20],type="b",xlab="Nombre de partitions",ylab="I_W")
 ```
 
 Enfin, avec la distance de ward, on obtient les résultats suivants: 
 
 ```{r}
 CAH_ward <- hclust( d = D,method="ward.D")
-plot(CAH_ward)
-plot(rev(CAH_ward$height),type="b",xlab="Nombre de partitions",ylab="I_W")
+plot(CAH_ward,hang=-1)
 ```
 
-Cette dernière CAH nous permet de confirmer notre hypothèse de partition en 3 groupes.
-
+Le tracé de la parte d'inertie nous permet de distinguer 3 groupes. 
 ```{r}
-plot(rev(CAH_ward$height),type="b",xlab="Nombre de partitions",ylab="I_W")
+plot(rev(CAH_ward$height)[1:20],type="b",xlab="Nombre de partitions",ylab="I_W")
 ```
 
-En conclusion, nous allons choisir une partition avec 3 groupes différents.
+Ainsi, cette dernière classification ascendante hiérarchique nous permet de confirmer notre hypothèse de partition.
 
+[Représentation graphique des groupes avec un dendrogramme :]{.underline}
 
-[Dendrogramme avec la fonction cutree :]{.underline}
-
-La fonction cutree permet de faire apparaitre visuellement les groupes.
+Ensuite, ce dendrogramme nous permet de distinguer clairement les groupes de pays. Notre hypothèse est donc valide.
 
 ```{r}
 K=3
+plot(CAH_ward,hang=-1)
+rect.hclust(CAH_ward,K,border="blue")
+```
+
+[Représentation graphique des clusters avec la fonction cutree :]{.underline}
+
+La fonction cutree permet de faire apparaitre visuellement les groupes.
+Dans notre cas, on fixe K = 3 car nous avons choisi de réaliser une partition en 3 groupes.
+
+```{r}
 gpe.ward = cutree(CAH_ward,k=K)
 plot(gpe.ward)
 ```
 
-Sur ce graphique, on remarque correctement 3 groupes distinct.
+Sur ce graphique, on remarque correctement 3 groupes distincts.
  
  
 [Représentation des groupes avec la fonction clusplot :]{.underline}
 
 ```{r}
-clusplot(data,cutree(CAH_ward,K),labels=4,col.p=as.numeric(rownames(data)))
+data$gpe.ward <- gpe.ward
+clusplot(data,cutree(CAH_ward,K),labels=4)
 ```
  
-Ce graphe correspond à la représentation des groupes sur les deux premiers axes principaux d'une ACP. De plus, des ellipses de contour autour des groupes sont tracées. On observe ici en colorant les points avec leur vraie classes que ??
+Ce graphe correspond à la représentation des groupes sur les deux premiers axes principaux d'une ACP. De plus, des ellipses de contour autour des groupes sont tracées. Ici, nous pouvons voir 3 groupes. En colorant les points avec leur vraie classe, nous pouvons observer que 
 
-A FINIR PB PAS DE POINTS (pas eu le temps de finir)
+# A FINIR 
+
+[Agrégation autour de centres mobiles :]{.underline}
+
+```{r}
+K = 3 # 3 groupes
+c <- kmeans(data,K,nstart=50)
+c
+```
+La fonction **kmeans** nous permet d'obtenir le partitionnement final. Dans notre cas, elle nous rend 3 clusters composés de 35, 109 et 23 individus. Ici, nous avons initialisé nstart à 50 pour répéter la procédure plusieurs fois et garder la partition avec la plus faible inertie intra classes.
+
+```{r}
+clusplot(data,c$cluster,labels=4)
+```
+
+```{r}
+
+```
+
