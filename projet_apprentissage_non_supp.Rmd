@@ -28,18 +28,27 @@ str(data)
 
 Dans ce jeu de données, nous pouvons observer 10 variables dont 9 numériques et 1 facteur comprenant les différents pays (individus). Nous avons choisi de transformer la variable pays en facteur pour simplifier nos traitement des données.
 
+## Prétraitement des données
 
-# STANDARDISATION ?
-
-Afin de pouvoir analyser ces données, nous allons réaliser des statistiques descriptives de base.
-
-## Statistiques descriptives
+### Données manquantes
 
 ```{r}
 sum(is.na(data))
 ```
 
-Le jeu de données ne présente pas de valeur manquante, nous n'avons pas besoin de faire de modification de ce point de vue.
+Le jeu de données ne présentent pas de valeur manquante. Nous n'avons pas besoin de faire de modification de ce point de vue.
+
+### Standardisation des données
+
+Nous pouvons remarquer que les données sont dans des unités différentes et les ordres de grandeur sont très variables. Nous avons donc choisi de standardiser les données.
+
+```{r}
+data <- scale(data)
+```
+
+Afin de pouvoir analyser ces données, nous allons réaliser des statistiques descriptives de base.
+
+### Statistiques descriptives
 
 [Résumé des données :]{.underline}
 
@@ -51,7 +60,6 @@ Ce résumé statistique nous permet d'avoir une vue d'ensemble sur les données.
 Notre jeu de données est composé de 167 pays très hétérogènes. En effet, nous pouvons observer une assez grande différence entre le minimum et le maximum de chaque variable, ce qui prouve la diversité de notre échantillon.
 
 [Graphiques :]{.underline}
-
 
 ```{r}
 ggplot(data=data, aes(y=enfant_mort)) + 
@@ -102,8 +110,8 @@ ggplot(data=data, aes(y=fert)) +
   theme(plot.title = element_text(hjust=0.5))
 ```
 
-
 Imports et Exports :
+
 ```{r}
 imports <- ggplot(data=data, aes(y=imports)) + 
   geom_boxplot(outlier.colour="red", outlier.shape=8,outlier.size=4)+
@@ -117,18 +125,18 @@ exports <- ggplot(data=data, aes(y=exports)) +
 
 grid.arrange(exports, imports, ncol=2)
 ```
+
 [Matrice de corrélation :]{.underline}
 
 ```{r}
 corrplot(cor(data[-1]),method="circle")
 ```
-Grâce à cette matrice de corrélation, nous pouvons observer une corrélation négative, entre l'espérance de vie et le nombre d'enfants par femme. Par ailleurs, une corrélation positive,proche de 1, apparaît entre le PIB par habitant et le revenu net moyen par personne.
 
+Grâce à cette matrice de corrélation, nous pouvons observer une corrélation négative, entre l'espérance de vie et le nombre d'enfants par femme. Par ailleurs, une corrélation positive,proche de 1, apparaît entre le PIB par habitant et le revenu net moyen par personne.
 
 # Question 2
 
 [Matrice de dissimilarité :]{.underline}
-
 
 Afin de chercher les individus similaires, on peut calculer une matrice de distance / dissimilarité.
 
@@ -138,8 +146,12 @@ MD <- as.matrix(dist(data,method = "euclidean"))
 # MD <- as.matrix(dist(data,method = "manhattan"))
 which(MD == min(MD[row(MD)!=col(MD)]),arr.ind=TRUE)
 ```
-Avec la distance euclidienne, de manhattan et mikowski, les deux pays les plus proches / similaires sont le Burkina Faso et la Guinée-Bissau. 
 
+Avec la méthode de la distance euclidienne, de manhattan et minkowski, les deux pays les plus proches / similaires sont la Pologne et la Croatie.
+
+Dans notre situation, les variables sont quantitatives, nous pouvons donc utiliser une approche en termes de distances. On cherche à partitionner les pays en groupes distincts et homogènes afin de déterminer leur besoin de d'aide. L'objectif est de former des groupes compacts avec une faible variabilité au sein des groupes.
+
+### Première approche : CAH
 
 [Classification Ascendante Hiérarchique :]{.underline}
 
@@ -149,88 +161,103 @@ Cette première représentation nous permet d'observer de potentiels groupes de 
 pairs(data)
 ```
 
-
-On calcule d'abord la distance euclidienne au carré : 
+On calcule d'abord la distance euclidienne au carré. Le calcul de la distance euclidienne nous permettra par la suite d'être optimal lors de l'utilisation de la stratégie de Ward.
 
 ```{r}
 D <- dist(data,method="euclidean")^2
 ```
 
-Méthode CAH avec le saut minimal (single linkage) : 
+[Méthode CAH avec le saut minimal (single linkage) :]{.underline}
 
 ```{r}
 CAH_min <- hclust(d= D,method="single")
 plot(CAH_min)
 ```
-Ce premier dendrogramme n'est pas très explicite et ne nous permet pas de faire un choix de partition clair. 
+
+Ce premier dendrogramme n'est pas très explicite et ne nous permet pas de faire un choix de partition clair.
 
 ```{r}
 plot(rev(CAH_min$height)[1:20],type="b",xlab="Nombre de partitions",ylab="I_W")
 ```
 
-Cependant, le tracé de la pertie d'inertie nous suggère de choisir une partition en 3 ou 4 groupes. Nous avons choisi de représenter seulement les 20 premières valeurs pour ne pas "noyer" l'information importante. Chaque coupure correspond à un saut important d'inertie intra-classes. 
+Cependant, le tracé de la pertie d'inertie nous suggère de choisir une partition en 2 groupes. Nous avons choisi de représenter seulement les 20 premières valeurs pour ne pas "noyer" l'information importante. Chaque coupure correspond à un saut important d'inertie intra-classes.
 
+Faisons maintant les mêmes graphiques avec la méthode de distance de saut maximal (complet linkage).
 
-Faisons maintant les mêmes graphiques avec la méthode de distance de saut maximal (complet linkage):
+[Méthode CAH avec le saut maximal :]{.underline}
 
 ```{r}
 CAH_max <- hclust(d= D,method="complete")
 plot(CAH_max)
 ```
 
-En analysant ce dendrogramme, nous pouvons distinguer 3 groupes de pays différents. De plus, le graphique suivant nous permet de confirmer cette hypothèse. 
+En analysant ce dendrogramme, nous pouvons distinguer 2 ou 3 groupes de pays différents. Le graphique ci-dessous n'est pas très concluant quant à cette hypothèse. Nous avons donc besoin de continuer nos analyses.
 
 ```{r}
 plot(rev(CAH_max$height)[1:20],type="b",xlab="Nombre de partitions",ylab="I_W")
 ```
 
-Enfin, avec la distance de ward, on obtient les résultats suivants: 
+[CAH avec la distance de Ward :]{.underline}
+
+Enfin, avec la distance de ward, on obtient les résultats suivants :
 
 ```{r}
 CAH_ward <- hclust( d = D,method="ward.D")
 plot(CAH_ward,hang=-1)
 ```
 
-Le tracé de la parte d'inertie nous permet de distinguer 3 groupes. 
+Le dendrogramme nous permet aussi de supposer l'existence de 2 voire 3 groupes.\
+Le tracé de la perte d'inertie nous permet de nous pencher vers le choix de 2 groupes.
+
 ```{r}
 plot(rev(CAH_ward$height)[1:20],type="b",xlab="Nombre de partitions",ylab="I_W")
 ```
 
 Ainsi, cette dernière classification ascendante hiérarchique nous permet de confirmer notre hypothèse de partition.
 
-[Représentation graphique des groupes avec un dendrogramme :]{.underline}
+# A REVOIR : POURQUOI ON A PAS DE COUDE ???
 
-Ensuite, ce dendrogramme nous permet de distinguer clairement les groupes de pays. Notre hypothèse est donc valide.
+[Critère automatique à partir du package 'NbClust' :]{.underline}
 
 ```{r}
-K=3
+NbClust(data,min.nc = 2,max.nc = 15,method="ward.D",index="all")
+```
+
+C'est aussi une partition en 2 groupes que l'on obtient.
+
+
+[Représentation graphique des clusters avec la fonction cutree :]{.underline}
+
+La fonction cutree permet de faire apparaitre visuellement les groupes. Dans notre cas, on fixe K = 2 car nous avons choisi de réaliser une partition en 2 groupes.
+
+```{r}
+gpe.ward = cutree(CAH_ward,k=K)
+# plot(gpe.ward)
+# gpe.ward
+```
+
+Sur ce graphique, on remarque correctement 2 groupes distincts.
+
+
+[Représentation graphique des clusters avec un dendrogramme :]{.underline}
+
+```{r}
+K=2
 plot(CAH_ward,hang=-1)
 rect.hclust(CAH_ward,K,border="blue")
 ```
 
-[Représentation graphique des clusters avec la fonction cutree :]{.underline}
 
-La fonction cutree permet de faire apparaitre visuellement les groupes.
-Dans notre cas, on fixe K = 3 car nous avons choisi de réaliser une partition en 3 groupes.
-
-```{r}
-gpe.ward = cutree(CAH_ward,k=K)
-plot(gpe.ward)
-```
-
-Sur ce graphique, on remarque correctement 3 groupes distincts.
- 
- 
 [Représentation des groupes avec la fonction clusplot :]{.underline}
 
 ```{r}
 data$gpe.ward <- gpe.ward
 clusplot(data,cutree(CAH_ward,K),labels=4)
 ```
- 
-Ce graphe correspond à la représentation des groupes sur les deux premiers axes principaux d'une ACP. De plus, des ellipses de contour autour des groupes sont tracées. Ici, nous pouvons voir 3 groupes. En colorant les points avec leur vraie classe, nous pouvons observer que 
 
-# A FINIR 
+Ce graphe correspond à la représentation des groupes sur les deux premiers axes principaux d'une ACP. De plus, des ellipses de contour autour des groupes sont tracées. Ici, nous pouvons voir 3 groupes. En colorant les points avec leur vraie classe, nous pouvons observer que
+
+### Deuxième approche : Centres mobiles
 
 [Agrégation autour de centres mobiles :]{.underline}
 
@@ -239,6 +266,7 @@ K = 3 # 3 groupes
 c <- kmeans(data,K,nstart=50)
 c
 ```
+
 La fonction **kmeans** nous permet d'obtenir le partitionnement final. Dans notre cas, elle nous rend 3 clusters composés de 35, 109 et 23 individus. Ici, nous avons initialisé nstart à 50 pour répéter la procédure plusieurs fois et garder la partition avec la plus faible inertie intra classes.
 
 ```{r}
@@ -249,3 +277,4 @@ clusplot(data,c$cluster,labels=4)
 
 ```
 
+### 
