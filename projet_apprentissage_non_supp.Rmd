@@ -21,9 +21,9 @@ library(NbClust)
 ## Importation des données
 
 ```{r}
-data <- read.csv("Pays_donnees.csv",sep=",",dec=".",stringsAsFactors = T,row.names="pays")
-str(data)
-# summary(data)
+d <- read.csv("Pays_donnees.csv",sep=",",dec=".",stringsAsFactors = T,row.names="pays")
+str(d)
+# summary(d)
 ```
 
 Dans ce jeu de données, nous pouvons observer 10 variables dont 9 numériques et 1 facteur comprenant les différents pays (individus). Nous avons choisi de transformer la variable pays en facteur pour simplifier nos traitement des données.
@@ -33,7 +33,7 @@ Dans ce jeu de données, nous pouvons observer 10 variables dont 9 numériques e
 ### Données manquantes
 
 ```{r}
-sum(is.na(data))
+sum(is.na(d))
 ```
 
 Le jeu de données ne présentent pas de valeur manquante. Nous n'avons pas besoin de faire de modification de ce point de vue.
@@ -43,17 +43,20 @@ Le jeu de données ne présentent pas de valeur manquante. Nous n'avons pas beso
 Nous pouvons remarquer que les données sont dans des unités différentes et les ordres de grandeur sont très variables. Nous avons donc choisi de standardiser les données.
 
 ```{r}
-data <- scale(data)
+data <- scale(d)
 ```
 
 Afin de pouvoir analyser ces données, nous allons réaliser des statistiques descriptives de base.
 
 ### Statistiques descriptives
 
+On effectue les statistiques descriptives sur les valeurs avant standardisation. 
+# DEMANDER AU PROF SI CELA A DU SENS ?
+
 [Résumé des données :]{.underline}
 
 ```{r}
-stargazer(data,type="text",title="Résumé des données",out="resume_donnnees.txt")
+# stargazer(d,type="text",title="Résumé des données",out="resume_donnnees.txt")
 ```
 
 Ce résumé statistique nous permet d'avoir une vue d'ensemble sur les données.\
@@ -62,19 +65,19 @@ Notre jeu de données est composé de 167 pays très hétérogènes. En effet, n
 [Graphiques :]{.underline}
 
 ```{r}
-ggplot(data=data, aes(y=enfant_mort)) + 
+ggplot(data=d, aes(y=enfant_mort)) +
   geom_boxplot(outlier.colour="red", outlier.shape=8,outlier.size=4)+
   labs(title="Nombre de décès d'enfants de moins de 5 ans",y="Nombre de décès pour 1000 naissances")+
   theme(plot.title = element_text(hjust=0.5))
 ```
 
 ```{r}
-sante <- ggplot(data=data, aes(y=sante)) + 
+sante <- ggplot(data=d, aes(y=sante)) + 
   geom_boxplot(outlier.colour="red", outlier.shape=8,outlier.size=4)+
   labs(title="Dépenses totales de santé par habitant",y="Pourcentage du PIB par habitant")+
   theme(plot.title = element_text(hjust=0.5))
 
-esperance <- ggplot(data=data, aes(y=esper_vie)) + 
+esperance <- ggplot(data=d, aes(y=esper_vie)) + 
   geom_boxplot(outlier.colour="red", outlier.shape=8,outlier.size=4)+
   labs(title="Espérance de vie",y="Age")+
   theme(plot.title = element_text(hjust=0.5))
@@ -83,12 +86,12 @@ grid.arrange(sante,esperance,ncol=2)
 ```
 
 ```{r}
-revenu_net <- ggplot(data=data, aes(y=revenu)) + 
+revenu_net <- ggplot(data=d, aes(y=revenu)) + 
   geom_boxplot(outlier.colour="red", outlier.shape=8,outlier.size=4)+
   labs(title="Revenu net moyen par personne")+
   theme(plot.title = element_text(hjust=0.5))
 
-pib_hab <- ggplot(data=data, aes(y=pib_h)) + 
+pib_hab <- ggplot(data=d, aes(y=pib_h)) + 
   geom_boxplot(outlier.colour="red", outlier.shape=8,outlier.size=4)+
   labs(title="PIB par habitant")+
   theme(plot.title = element_text(hjust=0.5))
@@ -97,14 +100,14 @@ grid.arrange(revenu_net,pib_hab,ncol=2)
 ```
 
 ```{r}
-ggplot(data=data, aes(y=inflation)) + 
+ggplot(data=d, aes(y=inflation)) + 
   geom_boxplot(outlier.colour="red", outlier.shape=8,outlier.size=4)+
   labs(title="Mesure du taux de croissance annuel du PIB total")+
   theme(plot.title = element_text(hjust=0.5))
 ```
 
 ```{r}
-ggplot(data=data, aes(y=fert)) + 
+ggplot(data=d, aes(y=fert)) + 
   geom_boxplot(outlier.colour="red", outlier.shape=8,outlier.size=4)+
   labs(title="Nombre moyen d'enfants par femme")+
   theme(plot.title = element_text(hjust=0.5))
@@ -113,12 +116,12 @@ ggplot(data=data, aes(y=fert)) +
 Imports et Exports :
 
 ```{r}
-imports <- ggplot(data=data, aes(y=imports)) + 
+imports <- ggplot(data=d, aes(y=imports)) + 
   geom_boxplot(outlier.colour="red", outlier.shape=8,outlier.size=4)+
   labs(title="Importations de biens et services \npar habitant",y="Pourcentage du PIB par habitant")+
   theme(plot.title = element_text(hjust=0.5))
 
-exports <- ggplot(data=data, aes(y=exports)) + 
+exports <- ggplot(data=d, aes(y=exports)) + 
   geom_boxplot(outlier.colour="red", outlier.shape=8,outlier.size=4)+
   labs(title="Exportations de biens et services \npar habitant",y="Pourcentage du PIB par habitant")+
   theme(plot.title = element_text(hjust=0.5))
@@ -129,7 +132,7 @@ grid.arrange(exports, imports, ncol=2)
 [Matrice de corrélation :]{.underline}
 
 ```{r}
-corrplot(cor(data[-1]),method="circle")
+corrplot(cor(d[-1]),method="circle")
 ```
 
 Grâce à cette matrice de corrélation, nous pouvons observer une corrélation négative, entre l'espérance de vie et le nombre d'enfants par femme. Par ailleurs, une corrélation positive,proche de 1, apparaît entre le PIB par habitant et le revenu net moyen par personne.
@@ -225,19 +228,18 @@ NbClust(data,min.nc = 2,max.nc = 15,method="ward.D",index="all")
 
 C'est aussi une partition en 2 groupes que l'on obtient.
 
-
 [Représentation graphique des clusters avec la fonction cutree :]{.underline}
 
 La fonction cutree permet de faire apparaitre visuellement les groupes. Dans notre cas, on fixe K = 2 car nous avons choisi de réaliser une partition en 2 groupes.
 
 ```{r}
+K = 2
 gpe.ward = cutree(CAH_ward,k=K)
-# plot(gpe.ward)
+plot(gpe.ward)
 # gpe.ward
 ```
 
 Sur ce graphique, on remarque correctement 2 groupes distincts.
-
 
 [Représentation graphique des clusters avec un dendrogramme :]{.underline}
 
@@ -247,34 +249,57 @@ plot(CAH_ward,hang=-1)
 rect.hclust(CAH_ward,K,border="blue")
 ```
 
-
 [Représentation des groupes avec la fonction clusplot :]{.underline}
 
+# PROBLEME : LA LIGNE EN # POSE PROBLEME PQ ??
 ```{r}
-data$gpe.ward <- gpe.ward
+
+# data$gpe.ward <- gpe.ward
 clusplot(data,cutree(CAH_ward,K),labels=4)
 ```
 
-Ce graphe correspond à la représentation des groupes sur les deux premiers axes principaux d'une ACP. De plus, des ellipses de contour autour des groupes sont tracées. Ici, nous pouvons voir 3 groupes. En colorant les points avec leur vraie classe, nous pouvons observer que
+Ce graphe correspond à la représentation des groupes sur les deux premiers axes principaux d'une ACP. De plus, des ellipses de contour autour des groupes sont tracées. Ici, nous pouvons voir 2 groupes. 
 
-### Deuxième approche : Centres mobiles
+### Deuxième approche :  Agrégation autour de centres mobiles
 
-[Agrégation autour de centres mobiles :]{.underline}
+
+La fonction kmeans donne le résultat de l’algorithme d’agrégation autour des centres mobiles.
 
 ```{r}
-K = 3 # 3 groupes
+K = 2 # 2 groupes
 c <- kmeans(data,K,nstart=50)
 c
 ```
 
-La fonction **kmeans** nous permet d'obtenir le partitionnement final. Dans notre cas, elle nous rend 3 clusters composés de 35, 109 et 23 individus. Ici, nous avons initialisé nstart à 50 pour répéter la procédure plusieurs fois et garder la partition avec la plus faible inertie intra classes.
+La fonction **kmeans** nous permet d'obtenir le partitionnement final. Dans notre cas, elle nous rend 2 clusters composés de 135 et 32 pays. Ici, nous avons initialisé nstart à 50 pour répéter la procédure plusieurs fois et garder la partition avec la plus faible inertie intra classes.
+On peut en déduire qu'on a un groupe nécessiteux et l'autre plus aisé.
+
 
 ```{r}
 clusplot(data,c$cluster,labels=4)
 ```
+## Autre approche 
+
+
+# QUELLE EST LA DIFFERENCE AVEC NOTRE 1ERE APPROCHE ??
+
+Calcul de la matrice distance avec la dissimilarité basée sur la corrélation.
 
 ```{r}
-
+CorDist = as.dist((1-cor(t(data)))/2)
 ```
 
-### 
+```{r}
+CC.ward = hclust(dist(data),method="ward.D")
+plot(rev(CC.ward$height),type="b")
+plot(CC.ward,hang=-1)
+rect.hclust(CC.ward, 2, border ="magenta")
+```
+
+```{r}
+# gpe = cutree(CC.ward,k=2)
+# data$gpecah = as.factor(gpe)
+# interpcah = catdes(data,num.var = 8)
+# interpcah
+```
+
