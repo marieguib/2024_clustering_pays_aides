@@ -216,7 +216,7 @@ Le tracé de la perte d'inertie nous permet de nous pencher vers le choix de 2 g
 plot(rev(CAH_ward$height)[1:20],type="b",xlab="Nombre de partitions",ylab="I_W")
 ```
 
-Ainsi, cette dernière classification ascendante hiérarchique nous permet de confirmer notre hypothèse de partition.
+Cependant, cette dernière classification ascendante hiérarchique nous permet de douter de notre hypothèse de partition en 2 groupes. Ce dernier nous incite plutôt à choisir 3 groupes.
 
 # A REVOIR : POURQUOI ON A PAS DE COUDE ???
 
@@ -226,7 +226,10 @@ Ainsi, cette dernière classification ascendante hiérarchique nous permet de co
 NbClust(data,min.nc = 2,max.nc = 15,method="ward.D",index="all")
 ```
 
-C'est aussi une partition en 2 groupes que l'on obtient.
+Cette étape nous permet de conclure que le choix le plus pertinent est une partition en 2 groupes.
+Cependant, notre budget étant limité, nous allons devoir réaliser une deuxième classification sur le groupe le plus défavorisé.
+
+# A FAIRE !!
 
 [Représentation graphique des clusters avec la fonction cutree :]{.underline}
 
@@ -251,10 +254,8 @@ rect.hclust(CAH_ward,K,border="blue")
 
 [Représentation des groupes avec la fonction clusplot :]{.underline}
 
-# PROBLEME : LA LIGNE EN # POSE PROBLEME PQ ??
 ```{r}
-
-# data$gpe.ward <- gpe.ward
+data  <-  cbind(data,gpe.ward)
 clusplot(data,cutree(CAH_ward,K),labels=4)
 ```
 
@@ -268,7 +269,7 @@ La fonction kmeans donne le résultat de l’algorithme d’agrégation autour d
 ```{r}
 K = 2 # 2 groupes
 c <- kmeans(data,K,nstart=50)
-c
+# c
 ```
 
 La fonction **kmeans** nous permet d'obtenir le partitionnement final. Dans notre cas, elle nous rend 2 clusters composés de 135 et 32 pays. Ici, nous avons initialisé nstart à 50 pour répéter la procédure plusieurs fois et garder la partition avec la plus faible inertie intra classes.
@@ -303,3 +304,8 @@ rect.hclust(CC.ward, 2, border ="magenta")
 # interpcah
 ```
 
+
+
+# CLASSIFICATION SUR PETIT GROUPE (GROUPE PAYS DEFAVORISE) A FAIRE
+
+# ACP A FAIRE
