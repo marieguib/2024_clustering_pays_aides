@@ -1,9 +1,13 @@
 ---
-title: "Projet d'apprentissage non supervisé"
-author: "Marie Guibert - Clémence Chesnais"
-date: "`r Sys.Date()`"
-output: pdf_document
+title: "essai_avec_K=5"
+author: "Clémence CHESNAIS"
+date: "2023-04-12"
+output: html_document
 ---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
 # Environnement de travail
 
