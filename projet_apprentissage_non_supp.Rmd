@@ -42,7 +42,13 @@ Le jeu de données ne présentent pas de valeur manquante. Nous n'avons pas beso
 
 ### Standardisation des données
 
-Nous pouvons remarquer que les données sont dans des unités différentes et les ordres de grandeur sont très variables. Nous avons donc choisi de standardiser les données.
+Nous pouvons remarquer que les données sont dans des unités différentes et les ordres de grandeur sont très variables. Ce boxplot nous montre une différence notable entre les variables. Il nous incite donc à standardiser les données.
+
+```{r}
+boxplot(donnees)
+```
+
+Nous standardisons les données :
 
 ```{r}
 donnees.sc <- scale(donnees)
@@ -208,7 +214,7 @@ Enfin, avec la distance de ward, on obtient les résultats suivants :
 
 ```{r}
 CAH_ward <- hclust( d = D,method="ward.D")
-plot(CAH_ward,hang=-1)
+plot(CAH_ward,hang=-1,labels=FALSE)
 ```
 
 Le dendrogramme nous permet aussi de supposer l'existence de 2 voire 3 groupes.\
@@ -240,7 +246,7 @@ Dans notre cas, on fixe K = 2 car nous avons choisi de réaliser une partition e
 
 ```{r}
 K=2
-plot(CAH_ward,hang=-1)
+plot(CAH_ward,hang=-1,labels=FALSE)
 rect.hclust(CAH_ward,K,border="blue")
 ```
 
@@ -300,7 +306,7 @@ c
 ```
 
 La fonction **kmeans** nous permet d'obtenir le partitionnement final. Dans notre cas, elle nous rend 2 clusters composés de 133 et 32 pays. Ici, nous avons initialisé nstart à 50 pour répéter la procédure plusieurs fois et garder la partition avec la plus faible inertie intra classes.
-On peut en déduire qu'on a un groupe nécessiteux (groupe 1) et l'autre plus aisé (groupe 2).
+On peut en déduire qu'on a un groupe nécessiteux (groupe 2) et l'autre plus aisé (groupe 1).
 
 
 ```{r}
@@ -308,15 +314,168 @@ clusplot(donnees.sc,c$cluster,labels=4)
 ```
 
 On a donc deux groupes distincts, comme observé auparavant. \
-En conclusion, nous allons de nouveau réaliser une CAH mais cette fois-ci sur les données provenant du groupe "défavorisé", c'est-à-dire le groupe 1, pour réduire le nombre d'individus au sein de chaque cluster.\
+En conclusion, nous allons de nouveau réaliser une CAH mais cette fois-ci sur les données provenant du groupe "défavorisé", c'est-à-dire le groupe 2, pour réduire le nombre d'individus au sein de chaque cluster.\
 L'objectif est de répartir au mieux notre budget.
 
 ## Deuxième partitionnement
+
+Pour cette deuxième CAH, nous sélectionnons parmis nos données de base, les pays appartenant au groupe nécessiteux, c'est à dire au groupe 1 (obtenu à la suite du cutree)
 
 ```{r}
 donnees_defav <- donnees[donnees$gpe.ward==1,]
 nrow(donnees_defav)
 ```
 
+[Classification Ascendante Hiérarchique :]{.underline}
 
+Cette première représentation nous permet d'observer de potentiels groupes de pays. Ayant beaucoup de variables, cette analyse est un peu plus compliquée et aucune partition ne semble se démarquer.
+
+```{r}
+pairs(donnees_defav)
+```
+
+On calcule d'abord la distance euclidienne au carré. Le calcul de la distance euclidienne nous permettra par la suite d'être optimal lors de l'utilisation de la stratégie de Ward.
+
+```{r}
+D <- dist(donnees_defav,method="euclidean")^2
+```
+
+[Méthode CAH avec le saut minimal (single linkage) :]{.underline}
+
+```{r}
+CAH_min <- hclust(d= D,method="single")
+plot(CAH_min, labels = FALSE)
+```
+
+Ce premier dendrogramme n'est pas très explicite et ne nous permet pas de faire un choix de partition clair.
+
+```{r}
+plot(rev(CAH_min$height)[1:20],type="b",xlab="Nombre de partitions",ylab="I_W")
+```
+
+Cependant, le tracé de la pertie d'inertie nous suggère de choisir une partition en 2 groupes. Nous avons choisi de représenter seulement les 20 premières valeurs pour ne pas "noyer" l'information importante. Chaque coupure correspond à un saut important d'inertie intra-classes.
+
+Faisons maintant les mêmes graphiques avec la méthode de distance de saut maximal (complet linkage).
+
+[Méthode CAH avec le saut maximal :]{.underline}
+
+```{r}
+CAH_max <- hclust(d= D,method="complete")
+plot(CAH_max, labels = FALSE)
+```
+
+En analysant ce dendrogramme, nous pouvons distinguer 2 ou 3 groupes de pays différents. Le graphique ci-dessous n'est pas très concluant quant à cette hypothèse. Nous avons donc besoin de continuer nos analyses.
+
+```{r}
+plot(rev(CAH_max$height)[1:20],type="b",xlab="Nombre de partitions",ylab="I_W")
+```
+
+[CAH avec la distance de Ward :]{.underline}
+
+Enfin, avec la distance de ward, on obtient les résultats suivants :
+
+```{r}
+CAH_ward <- hclust( d = D,method="ward.D")
+plot(CAH_ward,hang=-1,labels=FALSE)
+```
+
+Le dendrogramme nous permet aussi de supposer l'existence de 2 voire 3 groupes.\
+Le tracé de la perte d'inertie nous permet de nous pencher vers le choix de 2 groupes.
+
+```{r}
+plot(rev(CAH_ward$height)[1:20],type="b",xlab="Nombre de partitions",ylab="I_W")
+```
+
+Cependant, cette dernière classification ascendante hiérarchique nous permet de douter de notre hypothèse de partition en 2 groupes. Ce dernier nous incite plutôt à choisir 3 groupes.
+
+
+
+[Critère automatique à partir du package 'NbClust' :]{.underline}
+
+```{r}
+NbClust(donnees.sc,min.nc = 2,max.nc = 15,method="ward.D",index="all")
+```
+
+Cette étape nous permet de conclure que le choix le plus pertinent est une partition en 2 groupes.
+Cependant, notre budget étant limité, nous allons devoir réaliser une deuxième classification sur le groupe le plus défavorisé.
+
+
+#### Interprétation des groupes :
+
+[Représentation graphique des clusters avec un dendrogramme :]{.underline}
+
+Dans notre cas, on fixe K = 2 car nous avons choisi de réaliser une partition en 2 groupes.
+
+```{r}
+K=2
+plot(CAH_ward,hang=-1,labels=FALSE)
+rect.hclust(CAH_ward,K,border="blue")
+```
+
+[Représentation graphique des clusters avec la fonction cutree :]{.underline}
+
+La fonction cutree permet de faire apparaitre visuellement les groupes. 
+
+```{r}
+gpe.ward <-  cutree(CAH_ward,k=K)
+donnees  <- cbind(donnees,gpe.ward)
+donnees$gpe.ward <- as.factor(donnees$gpe.ward)
+# plot(gpe.ward)
+interp_cah <- catdes(donnees,num.var = 10)
+interp_cah
+```
+
+
+```{r}
+plot.catdes(interp_cah,barplot = T)
+```
+
+
+A l'aide des deux sorties précédentes, nous remarquons que le groupe 1 est caractérisé par un faible taux de PIB par habitant, de revenu et d'espérance de vie. De plus, le taux d'enfants morts est plus important dans ce groupe-ci. Nous pouvons donc supposer que ce groupe comporte des pays plus défavorisés et en difficultés.\
+Par ailleurs, le second groupe présente un PIB par habitant et un revenu plus élevés. Aussi, l'espérance de vie, les dépenses de santé ainsi que le taux d'exportation sont positifs, caractéristiques des pays développés.  
+En conclusion, le groupe 1 comporte les pays défavorisés et le groupe 2 les pays plus développés, favorisés.
+
+
+[Représentation sur les deux premiers axes d'une ACP:]{.underline}
+
+```{r}
+CCpca = dudi.pca(donnees.sc,scannf=FALSE,nf=2)
+cumsum(CCpca$eig)/sum(CCpca$eig) # ?% de variabilité expliquée sur les deux premiers axes
+scatter(CCpca,posieig = "none",clab.row=0,pch=NA)
+text(CCpca$li[,1], CCpca$li[,2],labels =row.names(donnees),col=gpe.ward+1,xpd=TRUE)
+s.class(CCpca$li, factor(gpe.ward), col = 2:4, add.plot = TRUE,clabel = 1)
+```
+
+Les groupes ont un effectif trop important pour les analyser. De plus, ayant un budget limité, nous ne pouvons accorder l'argent à tous les pays du groupe 1.
+
+[Représentation des groupes avec la fonction clusplot :]{.underline}
+
+```{r}
+clusplot(donnees.sc,cutree(CAH_ward,K),labels=4)
+```
+
+Ce graphe correspond à la représentation des groupes sur les deux premiers axes principaux d'une ACP. De plus, des ellipses de contour autour des groupes sont tracées. Ici, nous pouvons voir 2 groupes. 
+
+
+### Deuxième approche :  Agrégation autour de centres mobiles
+
+Pour stabiliser nos résultats, nous réalisons la méthode des kmeans. Cette fonction donne le résultat de l’algorithme d’agrégation autour des centres mobiles.
+
+```{r}
+K = 2 # 2 groupes
+c <- kmeans(donnees,K,nstart=50)
+c
+```
+
+La fonction **kmeans** nous permet d'obtenir le partitionnement final. Dans notre cas, elle nous rend 2 clusters composés de 133 et 32 pays. Ici, nous avons initialisé nstart à 50 pour répéter la procédure plusieurs fois et garder la partition avec la plus faible inertie intra classes.
+On peut en déduire qu'on a un groupe nécessiteux (groupe 2) et l'autre plus aisé (groupe 1).
+
+
+```{r}
+clusplot(donnees.sc,c$cluster,labels=4)
+```
+
+On a donc deux groupes distincts, comme observé auparavant. \
+En conclusion, nous allons de nouveau réaliser une CAH mais cette fois-ci sur les données provenant du groupe "défavorisé", c'est-à-dire le groupe 2, pour réduire le nombre d'individus au sein de chaque cluster.\
+L'objectif est de répartir au mieux notre budget.
 
