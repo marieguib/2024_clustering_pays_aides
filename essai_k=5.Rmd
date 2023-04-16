@@ -322,13 +322,11 @@ c <- kmeans(donnees,K,nstart=50)
 Ici, nous avons initialisé nstart à 50 pour répéter la procédure plusieurs fois et garder la partition avec la plus faible inertie intra classes.
 
 
-
 On récupère les groupes : 
 
 ```{r}
-gpe.kmeans <- c$cluster
-data.frame(gpe.kmeans)
-table(gpe.kmeans)
+gpe.kmeans <- as.factor(c$cluster)
+donnees.sc <- cbind(donnees.sc, gpe.kmeans)
 ```
 
 ```{r}
@@ -338,7 +336,7 @@ clusplot(donnees.sc,c$cluster,labels=4)
 # Question 3
 
 Ayant un jeu de données assez restreint, les **kmeans** sont utiles mais la CAH est encore faisable. \
-Dans notre cas, la méthode des kmeans permet une convergence plus rapide, cependant, la CAH, nous permetd d'obtenir un groupe de pays plus restreint. Puisque notre budget est limité, cette méthode semble plus adaptée à notre situation. \
+Dans notre cas, la méthode des kmeans permet une convergence plus rapide, cependant, la CAH, nous permet d'obtenir un groupe de pays plus restreint. Puisque notre budget est limité, cette méthode semble plus adaptée à notre situation. \
 
 # DEUXIEME CAH 
 
@@ -347,6 +345,8 @@ A la suite de la deuxième méthode des kmeans, nous obtenons un groupe de pays 
 
 Puisque la méthode des kmeans nous donne des numéros de groupe variable à chaque éxecution du programme, nous devons récupérer le bon groupe correspondant aux pays nécessiteux.\
 On se base sur un pays étant dans le groupe des défavorisés et on récupère tous les autres du même groupe.
+
+
 ```{r}
 
 ```
