@@ -20,7 +20,15 @@ library(cluster)
 library(NbClust)
 library(ade4)
 library(FactoMineR)
+
 ```
+
+Nous initialisons une graine aléatoire afin d'obtenir les mêmes résultats à chaque exécution.
+
+```{r}
+set.seed(1234)
+```
+
 
 # Question 1
 
@@ -363,20 +371,6 @@ Nous observons un unique point (à droite) correspondant à un pays très en dif
 Dans un second temps, nous aiderons le deuxième cluster regroupant les pays en besoin d'aide.
 
 
-```{r}
-table(gpe.kmeans)
-grp <- which.min(table(gpe.kmeans))
-```
-Ce deuxième cluster contient 47 pays.\
-Nous identifions le pays le plus pauvre :
-
-```{r}
-df_donnees_sc <- as.data.frame(donnees.sc)
-P1 <- rownames(df_donnees_sc)[df_donnees_sc$gpe.kmeans==grp]
-P1
-```
-
-
 # Question 3
 
 Ayant un jeu de données assez restreint, les **kmeans** sont utiles mais la CAH est encore faisable. \
@@ -387,6 +381,7 @@ Puisque la méthode des kmeans nous donne des numéros de groupe variable à cha
 On se base sur un pays étant dans le groupe des défavorisés et on récupère tous les autres du même groupe. On utilise le Benin comme référence pour accéder aux autres pays du même groupe (défavorisés)\
 
 ```{r}
+df_donnees_sc <- as.data.frame(donnees.sc)
 # On récupère le numéro du groupe du Bénin :
 num_grp <- df_donnees_sc$gpe.kmeans[rownames(df_donnees_sc)=="Benin"]
 cat("Le numéro du groupe du bénin est",num_grp)
@@ -429,7 +424,7 @@ En analysant ce dendrogramme, nous pouvons distinguer 3 groupes de pays (un à d
 ```{r}
 plot(rev(CAH_max2$height)[1:20],type="b",xlab="Nombre de partitions",ylab="I_W")
 ```
-Le graphique ci-dessus n'est pas très concluant quant à l'hypothèse de partition en deux groupes. Nous nous posons la question d'une éventuelle partition en 3 ou 6 groupes de pays en observant les sauts d'inertie intra-classes.
+Le graphique ci-dessus n'est pas très concluant quant à l'hypothèse de partition en deux groupes. Nous nous posons la question d'une éventuelle partition en 3 groupes de pays en observant les sauts d'inertie intra-classes.
 
 [CAH avec la distance de Ward :]{.underline}
 
@@ -445,7 +440,7 @@ Le dendrogramme nous permet aussi de supposer l'existence de 3 groupes de pays.\
 ```{r}
 plot(rev(CAH_ward2$height)[1:20],type="b",xlab="Nombre de partitions",ylab="I_W")
 ```
-Ce tracé de la perte d'inertie intra-classes nous indique 3 ou 6 groupes.
+Ce tracé de la perte d'inertie intra-classes nous indique 2 groupes.
 
 En conclusion, nous avons décidé de chosisir une partition en 3 groupes afin de diviser au mieux notre budget et de se focaliser sur les pays les plus nécessiteux.
 
@@ -455,8 +450,7 @@ En conclusion, nous avons décidé de chosisir une partition en 3 groupes afin d
 ```{r}
 NbClust(donnees.sc_defav,min.nc = 2,max.nc = 15,method="ward.D",index="all")
 ```
-
-Grâce à cette méthode, nous confirmons notre choix de partition en 3 groupes.
+Même si cette méthode propose à la majorité une partition en 2 groupes, nous choisissons de diviser en 3 pour répartir au mieux notre budget.
 
 #### Interprétation des groupes :
 
@@ -470,7 +464,7 @@ plot(CAH_ward2,hang=-1,labels=FALSE)
 rect.hclust(CAH_ward2,K,border="blue")
 ```
 
-A l'aide de ce dendrogramme, nous supposons que le groupe ayant le plus faible effectif (à gauche) est composé des pays les plus défavorisés. Nous allons analyser cet aspect par la suite.
+A l'aide de ce dendrogramme, nous supposons que le groupe ayant le plus faible effectif (à gauche) est composé du pays le plus défavorisé. Nous allons analyser cet aspect par la suite.
 
 [Représentation graphique des clusters avec la fonction cutree :]{.underline}
 
@@ -479,49 +473,52 @@ La fonction cutree permet de faire apparaitre visuellement les groupes.
 ```{r}
 K = 3
 gpe.ward2 <-  cutree(CAH_ward2,k=K)
-donnees.sc_defav  <- cbind(donnees.sc_defav,gpe.ward2)
-donnees.sc_defav$gpe.ward2 <- as.factor(donnees.sc_defav$gpe.ward2)
+donnees.sc_defav2  <- cbind(donnees.sc_defav,gpe.ward2)
+donnees.sc_defav2$gpe.ward2 <- as.factor(donnees.sc_defav2$gpe.ward2)
 # plot(gpe.ward2)
-interp_cah2 <- catdes(donnees.sc_defav,num.var = 10)
+interp_cah2 <- catdes(donnees.sc_defav2,num.var = 10)
 interp_cah2
 ```
 
 ```{r}
 plot.catdes(interp_cah2,barplot = T)
 ```
-# A CONTINUER A PARTIR d4ICI
 
-A l'aide des deux sorties précédentes, nous remarquons que les groupes présentent des caractéristiques opposées. Le premier groupe est caractérisé par un faible taux de PIB par habitant, de revenu et d'espérance de vie.
-De plus, le taux d'enfants morts est plus important dans ce groupe-ci. Nous pouvons donc supposer que ce groupe comporte des pays plus défavorisés et en difficultés.\
+A l'aide des deux sorties précédentes, nous remarquons que les groupes présentent des caractéristiques. Le premier groupe est représenté par un faible taux d'importations et des dépenses de santé faibles. Cependant, il semble que ce groupe ait une fertilité importante.\
+Concernant le second groupe, nous observons une opposition dans ces trois domaines. De plus, le nombre d'enfants morts de moins de 5 ans est faible.\
+Enfin, le dernier groupe présente une seule caractéristique principale : un taux d'inflation très élevé.\
 
-Par ailleurs, le second groupe présente des caractéristiques communes comme le PIB par habitant et le revenu. Le taux d'importation étant assez élevé nous pouvons nous demander si ces pays dépendants des économies extérieurs. \ 
+Il est difficile d'identifier quel groupe correspond au groupe le plus défavorisé, nous allons donc continuer notre étude.
 
-Le troisième et quatrième groupe correspondent globalement à des pays avec un niveau de vie moyen et ne sont pas notre cible première. \
-
-Le dernier groupe comporte des pays plus riches avec une production et des exportations importantes.
 
 [Représentation sur les deux premiers axes d'une ACP:]{.underline}
 
 ```{r}
-CCpca = dudi.pca(donnees.sc,scannf=FALSE,nf=2)
+CCpca = dudi.pca(donnees.sc_defav,scannf=FALSE,nf=2)
 cumsum(CCpca$eig)/sum(CCpca$eig) # ?% de variabilité expliquée sur les deux premiers axes
 scatter(CCpca,posieig = "none",clab.row=0,pch=NA)
-text(CCpca$li[,1], CCpca$li[,2],labels =row.names(donnees),col=gpe.ward+1,xpd=TRUE)
-s.class(CCpca$li, factor(gpe.ward), col = 2:4, add.plot = TRUE,clabel = 1)
+text(CCpca$li[,1], CCpca$li[,2],labels =row.names(donnees.sc_defav),col=gpe.ward2+1,xpd=TRUE)
+s.class(CCpca$li, factor(gpe.ward2), col = 2:4, add.plot = TRUE,clabel = 1)
 ```
 
 L'ACP nous présente les deux axes déterminants pour nos pays. \
-L'axe 1 est caractérisé par un nombre moyen d'enfants par femme important et de décès d'enfants de moins de 5 ans. Ces deux composantes sont synonymes de pauvreté et d'un faible développement du pays. Nous devons donc aider en priorité les pays corrélés positivement avec l'axe 1. \
-De plus, lorsque les pays sont corrélés négativement avec l'axe 2, les dépenses de santé sont très faibles. \ 
+L'axe 1 est corrélé positivement avec des exportations et un PIB par habitant importants, négativement au nombre d'enfants morts de moins de 5 ans. L'axe 2, quant à lui, est corrélé positivement à la fertilité et l'espérance de vie et négativement aux importations et aux dépenses de santé.
+
+Nous devons donc aider en priorité les pays corrélés négativement à l'axe 1 et 2. \
 
 [Représentation des groupes avec la fonction clusplot :]{.underline}
 
 ```{r}
-K = 5
-clusplot(donnees.sc,cutree(CAH_ward,K),labels=4)
+K = 3
+clusplot(donnees.sc_defav,cutree(CAH_ward2,K),labels=4)
 ```
 
-Ce graphe correspond à la représentation des groupes sur les deux premiers axes principaux d'une ACP. De plus, des ellipses de contour autour des groupes sont tracées. Ici, nous pouvons voir 5 groupes.
+Ce graphe correspond à la représentation des groupes sur les deux premiers axes principaux d'une ACP. De plus, des ellipses de contour autour des groupes sont tracées. Ici, nous pouvons voir 3 groupes. Nous allons aider le groupe 2 puisqu'il présente les caractéristiques les plus défavorables de notre partionnement.
+
+A PARTIR D'ICI REPRENDRE
+--> dire qu'on s'aide pas du clusplot mais de l'ACP
+--> on chosiir le groupe 1
+--> vérifier que le set.seed fonctionne bien
 
 # Question 4
 
