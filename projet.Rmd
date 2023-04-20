@@ -566,9 +566,25 @@ En conclusion, deux choix s'offrent à nous : nous pouvons proposer de venir en 
 ## Carte des pays à aider en priorité
 
 ```{r}
+library(sf)
+library(rnaturalearth)
+# Espace de travail et data.frame
+world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
+class(world)
+liste_nom_pays <- c(liste_noms$` `,'Nigeria',"Congo, Rep","	Côte d'Ivoire") # pour merge 
+# data_pays_carte <- data.frame(
+#   nom = liste_nom_pays,
+#   y = 1
+# )
+world$pays_defav <- ifelse(world$name_sort %in% liste_nom_pays, 1, 0)
 
+# Création de la carte
+ggplot(data = world) + geom_sf(aes(fill=pays_defav)) + theme(legend.position="none")+
+  labs(title = "Les pays défavorisés à aider en priorité")+
+  theme(plot.title = element_text(hjust = 0.45))
 ```
 
+Cette carte nous montre bien que les pays défavorisés nécessiteux se trouve majoritairement en Afrique.
 
 # Améliorations possibles 
 
