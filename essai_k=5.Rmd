@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Environnement de travail
 
-```{r, messsage = FALSE}
+```{r, message = FALSE, warning=FALSE}
 library(tidyverse)
 library(stargazer)
 library(gridExtra)
