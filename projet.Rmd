@@ -170,7 +170,7 @@ which(MD == min(MD[row(MD)!=col(MD)]),arr.ind=TRUE)
 
 Avec la méthode de la distance euclidienne, de manhattan et minkowski, les deux pays les plus proches / similaires sont la Pologne et la Croatie.
 
-Dans notre situation, les variables sont quantitatives, nous pouvons donc utiliser une approche en termes de distances. On cherche à partitionner les pays en groupes distincts et homogènes afin de déterminer leur besoin de d'aide. L'objectif est de former des groupes compacts avec une faible variabilité au sein des groupes.
+Dans notre situation, les variables sont quantitatives, nous pouvons donc utiliser une approche en termes de distances. On cherche à partitionner les pays en groupes distincts et homogènes afin de déterminer leur besoin d'aide. L'objectif est de former des groupes compacts avec une faible variabilité au sein des groupes.
 
 ### Première approche : CAH
 
@@ -218,7 +218,7 @@ En analysant ce dendrogramme, nous pouvons distinguer 3 groupes de pays : un à 
 plot(rev(CAH_max$height)[1:20],type="b",xlab="Nombre de partitions",ylab="I_W")
 ```
 
-Le graphique ci-dessus n'est pas très concluant quant à l'hypothèse de partition en deux groupes. Nous nous posons la question d'une éventuelle partition en cinq groupes de pays en observant les sauts d'inertie intra-classes. En effet, ayant un budget limité, cette approche nous permettrait de diviser au mieux notre budget. Nous continuons donc nos analyses.
+Le graphique ci-dessus n'est pas très concluant quant à l'hypothèse de partition en deux groupes. Nous nous posons la question d'une éventuelle partition en cinq groupes de pays en observant les sauts d'inertie intra-classes. En effet, ayant un budget limité, cette approche nous permettrait de le diviser au mieux. Nous continuons donc nos analyses.
 
 [CAH avec la distance de Ward :]{.underline}
 
@@ -282,7 +282,7 @@ nrow(donnees[donnees$gpe.ward==1,])
 Le groupe nécessiteux est composé de 27 pays.
 
 ```{r}
-plot.catdes(interp_cah,barplot = T)
+plot.catdes(interp_cah,barplot = T,output = "figure")
 ```
 
 A l'aide des deux sorties précédentes, nous remarquons que les groupes présentent des caractéristiques opposées. Le premier groupe est caractérisé par un faible taux de PIB par habitant, de revenu et d'espérance de vie. De plus, le taux d'enfants morts est plus important dans ce groupe-ci. Nous pouvons donc supposer que ce groupe comporte des pays plus défavorisés et en difficultés.\
@@ -295,7 +295,7 @@ Le dernier groupe comporte des pays plus riches avec une production et des expor
 
 [Représentation sur les deux premiers axes d'une ACP:]{.underline}
 
-```{r}
+```{r warming=FALSE}
 CCpca = dudi.pca(donnees.sc,scannf=FALSE,nf=2)
 cumsum(CCpca$eig)/sum(CCpca$eig) # ?% de variabilité expliquée sur les deux premiers axes
 scatter(CCpca,posieig = "none",clab.row=0,pch=NA)
@@ -336,7 +336,7 @@ donnees.sc <- cbind(donnees.sc, gpe.kmeans)
 
 [Représentation sur les deux premiers axes d'une ACP:]{.underline}
 
-```{r}
+```{r warning = FALSE, message = FALSE}
 CCpca = dudi.pca(donnees.sc,scannf=FALSE,nf=2)
 cumsum(CCpca$eig)/sum(CCpca$eig) # ?% de variabilité expliquée sur les deux premiers axes
 scatter(CCpca,posieig = "none",clab.row=0,pch=NA)
@@ -476,7 +476,7 @@ Il est difficile d'identifier quel groupe correspond au groupe le plus défavori
 
 [Représentation sur les deux premiers axes d'une ACP:]{.underline}
 
-```{r}
+```{r warning = FALSE, message = FALSE}
 CCpca = dudi.pca(donnees.sc_defav,scannf=FALSE,nf=2)
 cumsum(CCpca$eig)/sum(CCpca$eig) # ?% de variabilité expliquée sur les deux premiers axes
 scatter(CCpca,posieig = "none",clab.row=0,pch=NA)
